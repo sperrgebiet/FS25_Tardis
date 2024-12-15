@@ -404,7 +404,7 @@ function Tardis:teleportToLocation(x, z, veh, isReset, isHotspot)
 				local realVeh = g_currentMission.vehicleSystem.vehicles[envVeEx.VehicleSort.Sorted[envVeEx.VehicleSort.selectedIndex]];
 				if realVeh ~= nil then
 					veh = realVeh;
-					if veh ~= g_currentMission.controlledVehicle then
+					if veh ~= self.getCurrentVehicle() then
 						envVeEx.VehicleSort.wasTeleportAction = true;
 					end
 				end
@@ -412,7 +412,7 @@ function Tardis:teleportToLocation(x, z, veh, isReset, isHotspot)
 		end
 		
 		if veh == nil then
-			veh = g_currentMission.controlledVehicle;
+			veh = self.getCurrentVehicle();
 		end
 
 		-- We don't want to teleport cranes or trains
@@ -443,7 +443,8 @@ function Tardis:teleportToLocation(x, z, veh, isReset, isHotspot)
 		Tardis:dp(string.format('targetX {%s} - targetZ {%s}', tostring(targetX), tostring(targetZ)), 'teleportToLocation');
 		
 		if veh == nil and not isReset then
-			g_localPlayer:teleportTo(targetX, 0.5, targetZ);
+			--g_localPlayer:teleportTo(targetX, 1.2, targetZ);
+            executeConsoleCommand(string.format('gsTeleport %d %d', targetX, targetZ))
 			Tardis:Freeze(false);
 		else
 			local vehicleCombos = {};
