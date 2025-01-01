@@ -12,6 +12,7 @@ $ignoreList += "/README.md"
 $ignoreList += "/DEBUG"
 $ignoreList += "/icon_tardis.pdn"
 $ignoreList += "/MPTest.cmd"
+$ignoreList += "/LICENSE"
 
 $ignoreList = ($ignorelist | ?{ -not [string]::IsNullOrEmpty($_) })
 

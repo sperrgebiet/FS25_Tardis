@@ -1,4 +1,4 @@
--- Tardis.lua for FS19
+-- Tardis.lua for FS25
 -- Author: sperrgebiet
 -- Please see https://github.com/sperrgebiet/FS25_Tardis for additional information, credits, issues and everything else
 
@@ -10,7 +10,7 @@ Tardis.eventName = {};
 --Tardis.ModDirectory = g_currentModDirectory
 Tardis.ModName = "FS25_Tardis"
 Tardis.ModDirectory = g_modManager.nameToMod.FS25_Tardis.modDir
-Tardis.Version = "0.9.2.1";
+Tardis.Version = "0.1.0.2";
 
 -- Integration environment for VehicleExplorer
 envVeEx = nil;
@@ -153,6 +153,11 @@ function Tardis:mouseEvent(posX, posY, isDown, isUp, button)
         if posY >= mOY and posY <= mOY + g_currentMission.hud.ingameMap.layout.mapSizeY then
             Tardis.worldZpos = 1 - (posY - mOY) / g_currentMission.hud.ingameMap.layout.mapSizeY;
         end;
+
+        -- Render position for Debug
+        --local debugText = "posX: " .. posX .. " | posY: " .. posY .. "tardis.worldXpos: " .. Tardis.worldXpos .. "Tardis worldZpos: " .. Tardis.worldZpos
+        --renderText(0.5, 0.5, getCorrectTextSize(0.016), debugText);
+
         if isDown and button == Input.MOUSE_BUTTON_LEFT then
 			Tardis:dp(string.format('posX {%s} posY {%s} - mOX {%s} mOY {%s} - worldXpos {%s} worldZpos {%s}', posX, posY, mOX, mOY, Tardis.worldXpos, Tardis.worldZpos));
 
@@ -164,8 +169,10 @@ function Tardis:mouseEvent(posX, posY, isDown, isUp, button)
 				Tardis:teleportToLocation(posX, posZ, veh, false, false, false)
 				TardisTeleportEvent.sendEvent(posX, posZ, veh, false, false, false)
 			else
-				--Tardis:dp(string.format('telePort param1 {%s} - param2 {%s}', Tardis.worldXpos * g_currentMission.terrainSize, Tardis.worldZpos * g_currentMission.terrainSize));
-				Tardis:teleportToLocation(posX, posZ);
+				Tardis:dp(string.format('telePort param1 {%s} - param2 {%s}',posX, posZ));
+				
+
+                Tardis:teleportToLocation(posX, posZ);
 				TardisTeleportEvent.sendEvent(posX, posZ, nil, false, false, false)
 			end
             Tardis.TardisActive = false;
@@ -266,7 +273,7 @@ function Tardis:draw()
         setTextAlignment(RenderText.ALIGN_RIGHT)
         setTextBold(false)
         setTextColor(0, 1, 0.4, 1)
-        renderText(g_currentMission.hud.ingameMap.layout.mapPosX + g_currentMission.hud.ingameMap.layout.mapSizeX - g_currentMission.hud.ingameMap.layout.coordOffsetX, g_currentMission.hud.ingameMap.layout.mapPosY + g_currentMission.hud.ingameMap.layout.coordOffsetY + 0.010, g_currentMission.hud.ingameMap.layout.coordinateFontSize, string.format(" [%04d", Tardis.worldXpos * g_currentMission.terrainSize) .. string.format(",%04d]", Tardis.worldZpos * g_currentMission.terrainSize));
+        renderText(g_currentMission.hud.ingameMap.layout.mapPosX + g_currentMission.hud.ingameMap.layout.mapSizeX - g_currentMission.hud.ingameMap.layout.coordOffsetX, g_currentMission.hud.ingameMap.layout.mapPosY + g_currentMission.hud.ingameMap.layout.coordOffsetY + 0.010, g_currentMission.hud.ingameMap.layout.coordinateFontSize, string.format("Tardis: [%04d", Tardis.worldXpos * g_currentMission.terrainSize) .. string.format(",%04d]", Tardis.worldZpos * g_currentMission.terrainSize));
         setTextColor(1, 1, 1, 1)
         setTextAlignment(RenderText.ALIGN_LEFT)
 		
@@ -424,14 +431,18 @@ function Tardis:teleportToLocation(x, z, veh, isReset, isHotspot)
 		local targetX, targetY, targetZ = 0, 0, 0;
 		
 		if not isReset and not isHotspot then	
-			local worldSizeX = g_currentMission.hud.ingameMap.worldSizeX;
-			local worldSizeZ = g_currentMission.hud.ingameMap.worldSizeZ;
-            Tardis:dp(string.format('worldSizeX {%d} | worldSizeY {%d}', worldSizeX, worldSizeZ), 'teleportToLocation');
-            --Apparently Giants decided taht clamp is not useful anymore
+            --As we have to use the console command we don't have to recalculate position anymore
+            --Yeah, I know it's not necessary to keep that part in the code. But we all know Giants, who knows what will be changed in the next patch ;)
+			--local worldSizeX = g_currentMission.hud.ingameMap.worldSizeX;
+			--local worldSizeZ = g_currentMission.hud.ingameMap.worldSizeZ;
+            --Tardis:dp(string.format('worldSizeX {%d} | worldSizeY {%d}', worldSizeX, worldSizeZ), 'teleportToLocation');
+            --Apparently Giants decided that clamp is not useful anymore
 			--targetX = MathUtil.clamp(x, 0, worldSizeX) - worldSizeX * 0.5;
 			--targetZ = MathUtil.clamp(z, 0, worldSizeZ) - worldSizeZ * 0.5;
-			targetX = Clamp(x, 0, worldSizeX) - worldSizeX * 0.5;
-			targetZ = Clamp(z, 0, worldSizeZ) - worldSizeZ * 0.5;
+            --targetX = Clamp(x, 0, worldSizeX) - worldSizeX * 0.5;
+			--targetZ = Clamp(z, 0, worldSizeZ) - worldSizeZ * 0.5;
+			targetX = x;
+			targetZ = z;
 		elseif isHotspot then
 			targetX = x;
 			targetZ = z;
@@ -441,55 +452,11 @@ function Tardis:teleportToLocation(x, z, veh, isReset, isHotspot)
 		end
 		
 		Tardis:dp(string.format('targetX {%s} - targetZ {%s}', tostring(targetX), tostring(targetZ)), 'teleportToLocation');
-		
-		if veh == nil and not isReset then
-			--g_localPlayer:teleportTo(targetX, 1.2, targetZ);
-            executeConsoleCommand(string.format('gsTeleport %d %d', targetX, targetZ))
-			Tardis:Freeze(false);
-		else
-			local vehicleCombos = {};
-			local vehicles = {};
 
-			local function addVehiclePositions(vehicle)
-				local x, y, z = getWorldTranslation(vehicle.rootNode);
-				table.insert(vehicles, {vehicle = vehicle, offset = {worldToLocal(veh.rootNode, x, y, z)}});
-				
-				if not Tardis:isHorse(veh) then
-					if #vehicle:getAttachedImplements() > 0 then
-						for _, impl in pairs(vehicle:getAttachedImplements()) do
-							addVehiclePositions(impl.object);
-							table.insert(vehicleCombos, {vehicle = vehicle, object = impl.object, jointDescIndex = impl.jointDescIndex, inputAttacherJointDescIndex = impl.object.spec_attachable.inputAttacherJointDescIndex});
-						end
-						
-						for i = table.getn(vehicle:getAttachedImplements()), 1, -1 do
-							vehicle:detachImplement(1, true);
-						end
-					end
-				end
-
-				vehicle:removeFromPhysics();
-			end
+        --g_localPlayer:teleportTo(targetX, 1.2, targetZ);
+        executeConsoleCommand(string.format('gsTeleport %d %d', targetX, targetZ))
+        Tardis:Freeze(false);
 			
-			addVehiclePositions(veh);
-			
-			for k, data in pairs(vehicles) do
-				local x, y, z = targetX, targetY, targetZ;
-				if k > 1 then
-					x, _, z = localToWorld(veh.rootNode, unpack(data.offset));
-				end;
-				local _, ry, _ = getWorldRotation(data.vehicle.rootNode);
-				data.vehicle:setRelativePosition(x, 0.5, z, ry, true);
-				data.vehicle:addToPhysics();
-			end
-			
-			if #vehicleCombos > 0 then
-				for _, combo in pairs(vehicleCombos) do
-					combo.vehicle:attachImplement(combo.object, combo.inputAttacherJointDescIndex, combo.jointDescIndex, true, nil, nil, false);
-				end
-			end
-			
-			Tardis:Freeze(false);
-		end
     end
 
 end
